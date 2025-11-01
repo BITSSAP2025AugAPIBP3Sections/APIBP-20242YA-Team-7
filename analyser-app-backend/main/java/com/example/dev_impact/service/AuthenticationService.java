@@ -103,4 +103,32 @@ public class AuthenticationService {
         token.setUser(user);
         tokenRepository.save(token);
     }
+
+    public String getGithubOAuthUrl(User user) {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI( vcsServiceUrl+ "/api/auth/github-login?user_id=" + user.getId().toString()))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.body();
+        } catch (URISyntaxException | IOException | InterruptedException e) {
+            return "";
+        }
+    }
+
+    public boolean getGithubConnectionStatus(User user) {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI( vcsServiceUrl+ "/api/auth/check-token?user_id=" + user.getId().toString()))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.statusCode() == 200;
+        } catch (URISyntaxException | IOException | InterruptedException e) {
+            return false;
+        }
+    }
 }

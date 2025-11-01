@@ -32,4 +32,10 @@ public class AuthenticationController {
         User user = (User) authentication.getPrincipal();
         return authService.getGithubOAuthUrl(user);
     }
+
+    @GetMapping("/github/status")
+    public boolean githubConnectionStatus(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return authService.getGithubConnectionStatus(user);
+    }
 }
