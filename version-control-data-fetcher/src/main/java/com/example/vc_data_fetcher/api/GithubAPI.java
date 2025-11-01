@@ -1,0 +1,15 @@
+package com.example.vc_data_fetcher.api;
+
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+
+@RequestMapping("/api/auth")
+public interface GithubAPI {
+
+	@GetMapping("/github-login")
+	String login(HttpServletResponse response,
+			   @RequestParam(value = "user_id", required = false) Long userId) throws IOException;
+}
