@@ -82,4 +82,25 @@ public class AuthenticationService {
         return new AuthenticationResponseDTO(jwt, "User login was successful", user.getFirstName() + " " + user.getLastName());
 
     }
+
+    private void revokeAllTokenByUser(User user) {
+        List<Token> validTokens = tokenRepository.findAllTokensByUser(user.getId());
+        if(validTokens.isEmpty()) {
+            return;
+        }
+
+        validTokens.forEach(t-> {
+            t.setLoggedOut(true);
+        });
+
+        tokenRepository.saveAll(validTokens);
+    }
+
+    private void saveUserToken(String jwt, User user) {
+        Token token = new Token();
+        token.setToken(jwt);
+        token.setLoggedOut(false);
+        token.setUser(user);
+        tokenRepository.save(token);
+    }
 }

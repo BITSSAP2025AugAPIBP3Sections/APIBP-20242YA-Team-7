@@ -26,4 +26,10 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponseDTO> login(@RequestBody User request) {
         return ResponseEntity.ok(authService.authenticate(request));
     }
+
+    @GetMapping("/github/oauth")
+    public String githubOAuth(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return authService.getGithubOAuthUrl(user);
+    }
 }
