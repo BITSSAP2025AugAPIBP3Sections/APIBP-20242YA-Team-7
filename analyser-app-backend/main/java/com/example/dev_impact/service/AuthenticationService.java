@@ -64,4 +64,22 @@ public class AuthenticationService {
         return new AuthenticationResponseDTO(jwt, "User registration was successful", user.getFirstName() + " " + user.getLastName());
 
     }
+
+    public AuthenticationResponseDTO authenticate(User request) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsername(),
+                        request.getPassword()
+                )
+        );
+
+        User user = repository.findByUsername(request.getUsername()).orElseThrow();
+        String jwt = jwtService.generateToken(user);
+
+        revokeAllTokenByUser(user);
+        saveUserToken(jwt, user);
+
+        return new AuthenticationResponseDTO(jwt, "User login was successful", user.getFirstName() + " " + user.getLastName());
+
+    }
 }
