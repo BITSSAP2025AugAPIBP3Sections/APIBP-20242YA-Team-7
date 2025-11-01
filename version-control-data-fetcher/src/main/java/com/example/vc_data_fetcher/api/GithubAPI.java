@@ -17,4 +17,12 @@ public interface GithubAPI {
 	void callback(@RequestParam("code") String code,
 				  @RequestParam(value = "state", required = false) String state,
 				  HttpServletResponse response) throws IOException;
+
+	@GetMapping("/exchange-token")
+	ResponseEntity<?> exchangeToken(@RequestParam("code") String code,
+									@RequestParam(value = "user_id", required = false) Long userId);
+
+	@GetMapping("/check-token")
+	ResponseEntity<?> checkToken(@RequestParam("user_id") Long userId);
+
 }

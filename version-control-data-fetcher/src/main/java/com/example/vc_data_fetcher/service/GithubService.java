@@ -101,5 +101,11 @@ public class GithubService {
             System.err.println("Failed to save token to database: " + e.getMessage());
         }
     }
+    public Optional<VCToken> getTokenByUserId(Long userId) {
+        return vcTokenRepository.findByUserId(userId);
+    }
 
+    public boolean hasValidToken(Long userId) {
+        return userId != null && vcTokenRepository.existsByUserId(userId);
+    }
 }
