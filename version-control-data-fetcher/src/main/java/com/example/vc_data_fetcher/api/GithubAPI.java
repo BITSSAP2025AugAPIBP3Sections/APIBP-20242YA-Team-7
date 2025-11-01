@@ -12,4 +12,9 @@ public interface GithubAPI {
 	@GetMapping("/github-login")
 	String login(HttpServletResponse response,
 			   @RequestParam(value = "user_id", required = false) Long userId) throws IOException;
+
+	@GetMapping("/callback")
+	void callback(@RequestParam("code") String code,
+				  @RequestParam(value = "state", required = false) String state,
+				  HttpServletResponse response) throws IOException;
 }

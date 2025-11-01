@@ -45,4 +45,29 @@ public class GithubController implements GithubAPI {
 
 		return githubAuthUrl;
 	}
+
+	@Override
+	public void callback(String code, String state, HttpServletResponse response) throws IOException {
+		try {
+			Long userId = null;
+			if (state != null && !state.isEmpty()) {
+				try {
+					userId = Long.parseLong(state);
+				} catch (NumberFormatException e) {
+					System.err.println("Invalid user_id in state parameter: " + state);
+				}
+			}
+
+			String accessToken = githubService.exchangeCodeForAccessToken(code, userId);
+
+			String redirectUrl = frontendUrl + "?auth=success&token_stored=true";
+			if (userId != null) {
+				redirectUrl += "&user_id=" + userId;
+			}
+			response.sendRedirect(redirectUrl);
+
+		} catch (Exception e) {
+			response.sendRedirect(frontendUrl + "?auth=error&message=" + e.getMessage());
+		}
+	}
 }
