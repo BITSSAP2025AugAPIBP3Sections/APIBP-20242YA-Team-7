@@ -30,6 +30,14 @@ public class EmailService {
         this.mailSenderAdapter = mailSenderAdapter;
     }
 
+    public String healthCheck() {
+        return "Email Service is up and running!";
+    }
+
+    public List<EmailEntity> getAllEmails() {
+        return emailRepository.findAll();
+    }
+
     public String sendEmail(String from, List<String> to, String subject, String body, String attachmentName) {
 
         EmailEntity emailEntity = new EmailEntity();
