@@ -15,10 +15,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RestController
 public class VCDataController {
+
+	private static final Logger logger = LoggerFactory.getLogger(VCDataController.class);
 
 	private final VCDataService vcDataService;
 
@@ -31,26 +35,34 @@ public class VCDataController {
 	 */
 	@QueryMapping
 	public ResponseEntity checkAccess(@Argument String repoUrl, @Argument Long userId) {
+		logger.info("GraphQL: Checking access for repo: {} by user ID: {}", repoUrl, userId);
 		try {
 			return vcDataService.checkRepoAccess(repoUrl, userId);
 		} catch (IllegalArgumentException e) {
+			logger.warn("GraphQL: Invalid repository URL: {}", e.getMessage());
 			throw new GraphQLException("Invalid repository URL: " + e.getMessage());
 		} catch (RuntimeException e) {
+			logger.error("GraphQL: Runtime error checking access: {}", e.getMessage());
 			throw new GraphQLException("Error checking repository access: " + e.getMessage());
 		} catch (Exception e) {
+			logger.error("GraphQL: Unexpected error checking access: {}", e.getMessage());
 			throw new GraphQLException("Unexpected error: " + e.getMessage());
 		}
 	}
 
 	@PostMapping("/api/repo-validate")
 	public ResponseEntity checkAccess(@RequestBody CheckAccessRequest request) {
+		logger.info("REST: Validating repo access for repo: {} by user ID: {}", request.getRepoUrl(), request.getUserId());
 		try {
 			return vcDataService.checkRepoAccess(request.getRepoUrl(), request.getUserId());
 		} catch (IllegalArgumentException e) {
+			logger.warn("REST: Invalid repository URL: {}", e.getMessage());
 			throw new GraphQLException("Invalid repository URL: " + e.getMessage());
 		} catch (RuntimeException e) {
+			logger.error("REST: Runtime error checking access: {}", e.getMessage());
 			throw new GraphQLException("Error checking repository access: " + e.getMessage());
 		} catch (Exception e) {
+			logger.error("REST: Unexpected error checking access: {}", e.getMessage());
 			throw new GraphQLException("Unexpected error: " + e.getMessage());
 		}
 	}
@@ -60,13 +72,17 @@ public class VCDataController {
 	 */
 	@QueryMapping
 	public List<ContributorWithCommits> repoData(@Argument String repoUrl, @Argument Long userId) {
+		logger.info("GraphQL: Fetching repo data for repo: {} by user ID: {}", repoUrl, userId);
 		try {
 			return vcDataService.getContributorsWithCommits(repoUrl, userId);
 		} catch (IllegalArgumentException e) {
+			logger.warn("GraphQL: Invalid repository URL for repo data: {}", e.getMessage());
 			throw new GraphQLException("Invalid repository URL: " + e.getMessage());
 		} catch (RuntimeException e) {
+			logger.error("GraphQL: Runtime error fetching repo data: {}", e.getMessage());
 			throw new GraphQLException("Error fetching repository data: " + e.getMessage());
 		} catch (Exception e) {
+			logger.error("GraphQL: Unexpected error fetching repo data: {}", e.getMessage());
 			throw new GraphQLException("Unexpected error: " + e.getMessage());
 		}
 	}

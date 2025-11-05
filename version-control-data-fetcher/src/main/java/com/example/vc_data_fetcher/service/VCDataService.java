@@ -13,9 +13,13 @@ import org.springframework.web.client.RestTemplate;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class VCDataService {
+
+	private static final Logger logger = LoggerFactory.getLogger(VCDataService.class);
 
 	@Autowired
 	private VCTokenRepository vcTokenRepository;
@@ -77,12 +81,14 @@ public class VCDataService {
 	 * Extract owner and repo from GitHub URL
 	 */
 	private String[] extractOwnerAndRepo(String repoUrl) {
+		logger.debug("Extracting owner and repo from URL: {}", repoUrl);
 		Pattern pattern = Pattern.compile("https://github\\.com/([^/]+)/([^/]+)(?:\\.git)?/?$");
 		Matcher matcher = pattern.matcher(repoUrl.trim());
 
 		if (matcher.matches()) {
 			return new String[]{matcher.group(1), matcher.group(2)};
 		}
+		logger.warn("Invalid GitHub repository URL: {}", repoUrl);
 		throw new IllegalArgumentException("Invalid GitHub repository URL: " + repoUrl);
 	}
 
@@ -90,8 +96,10 @@ public class VCDataService {
 	 * Get access token for user
 	 */
 	private String getAccessToken(Long userId) {
+		logger.debug("Fetching access token for user ID: {}", userId);
 		Optional<VCToken> tokenOpt = vcTokenRepository.findByUserId(userId);
 		if (tokenOpt.isEmpty()) {
+			logger.error("Access token not found for user: {}", userId);
 			throw new RuntimeException("Access token not found for user: " + userId);
 		}
 		return tokenOpt.get().getAccess_token();
@@ -113,6 +121,7 @@ public class VCDataService {
 	 */
 	private JsonNode executeGraphQLQuery(String query, Map<String, Object> variables, String accessToken) {
 		try {
+			logger.debug("Executing GraphQL query with variables: {}", variables);
 			Map<String, Object> requestBody = new HashMap<>();
 			requestBody.put("query", query);
 			requestBody.put("variables", variables);
@@ -123,19 +132,23 @@ public class VCDataService {
 			ResponseEntity<String> response = restTemplate.exchange(
 					GITHUB_GRAPHQL_URL, HttpMethod.POST, entity, String.class
 			);
+			logger.debug("GraphQL query response status: {}", response.getStatusCode());
 
 			if (response.getStatusCode() == HttpStatus.OK) {
 				JsonNode responseNode = objectMapper.readTree(response.getBody());
 
 				if (responseNode.has("errors")) {
+					logger.error("GraphQL errors detected in response: {}", responseNode.get("errors").toString());
 					throw new RuntimeException("GraphQL errors: " + responseNode.get("errors").toString());
 				}
 
 				return responseNode.get("data");
 			} else {
+				logger.error("Failed to execute GraphQL query with status: {}", response.getStatusCode());
 				throw new RuntimeException("Failed to execute GraphQL query: " + response.getStatusCode());
 			}
 		} catch (Exception e) {
+			logger.error("Error executing GraphQL query: {}", e.getMessage(), e);
 			throw new RuntimeException("Error executing GraphQL query: " + e.getMessage(), e);
 		}
 	}
@@ -144,6 +157,7 @@ public class VCDataService {
 	 * Check if user has access to read the repository
 	 */
 	public ResponseEntity checkRepoAccess(String repoUrl, Long userId) {
+		logger.info("Checking repository access for URL: {} by user ID: {}", repoUrl, userId);
 		try {
 			String[] ownerRepo = extractOwnerAndRepo(repoUrl);
 			String owner = ownerRepo[0];
@@ -156,14 +170,17 @@ public class VCDataService {
 
 			try {
 				JsonNode data = executeGraphQLQuery(REPO_ACCESS_QUERY, variables, accessToken);
+				logger.info("Repository access confirmed for repo: {}", repoUrl);
 				return ResponseEntity.status(HttpStatus.OK).build();
 			} catch (RuntimeException e) {
 				if (e.getMessage().contains("Could not resolve")) {
+					logger.warn("Repository {} not resolvable or unauthorized.", repoUrl);
 					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 				}
 				throw e;
 			}
 		} catch (Exception e) {
+			logger.error("Error checking repository access for URL {}: {}", repoUrl, e.getMessage());
 			throw new RuntimeException("Error checking repository access: " + e.getMessage(), e);
 		}
 	}
@@ -172,6 +189,7 @@ public class VCDataService {
 	 * Get all contributors with their commits using GraphQL
 	 */
 	public List<ContributorWithCommits> getContributorsWithCommits(String repoUrl, Long userId) {
+		logger.info("Fetching contributors and commits for repo: {} by user ID: {}", repoUrl, userId);
 		try {
 			String[] ownerRepo = extractOwnerAndRepo(repoUrl);
 			String owner = ownerRepo[0];
@@ -186,6 +204,7 @@ public class VCDataService {
 
 			for (Contributor contributor : contributors) {
 				try {
+					logger.debug("Fetching commits for contributor: {}", contributor.getAuthorName());
 					List<Commit> commits = getCommitsByAuthorGraphQL(owner, repo, contributor.getAuthorName(), accessToken);
 
 					ContributorWithCommits cwc = new ContributorWithCommits(
@@ -198,6 +217,7 @@ public class VCDataService {
 
 				} catch (Exception e) {
 					System.err.println("Error fetching commits for contributor " + contributor.getAuthorName() + ": " + e.getMessage());
+					logger.error("Error fetching commits for contributor {}: {}", contributor.getAuthorName(), e.getMessage());
 					// Add contributor with empty commits list if commits fetch fails
 					ContributorWithCommits cwc = new ContributorWithCommits(
 							contributor.getAuthorName(),
@@ -208,9 +228,10 @@ public class VCDataService {
 					result.add(cwc);
 				}
 			}
-
+			logger.info("Successfully fetched contributor and commit data for repo: {}", repoUrl);
 			return result;
 		} catch (Exception e) {
+			logger.error("Error fetching contributors with commits for repo {}: {}", repoUrl, e.getMessage(), e);
 			throw new RuntimeException("Error fetching contributors with commits: " + e.getMessage(), e);
 		}
 	}
@@ -220,6 +241,7 @@ public class VCDataService {
 	 */
 	private List<Contributor> getContributorsGraphQL(String owner, String repo, String accessToken) {
 		try {
+			logger.debug("Starting pagination for contributors in {}/{}", owner, repo);
 			Map<String, Contributor> contributorsMap = new HashMap<>();
 			String cursor = null;
 			boolean hasNextPage = true;
@@ -230,6 +252,7 @@ public class VCDataService {
 				variables.put("name", repo);
 				if (cursor != null) {
 					variables.put("after", cursor);
+					logger.debug("Fetching next page of commits using cursor: {}", cursor);
 				}
 
 				JsonNode data = executeGraphQLQuery(REPOSITORY_COMMITS_QUERY, variables, accessToken);
@@ -274,15 +297,18 @@ public class VCDataService {
 							cursor = pageInfo.get("endCursor").asText();
 						}
 					} else {
+						logger.warn("Repository {}/{} has no default branch ref.", owner, repo);
 						break;
 					}
 				} else {
+					logger.warn("Repository {}/{} data not found or is null.", owner, repo);
 					break;
 				}
 			}
-
+			logger.info("Finished fetching contributors. Total found: {}", contributorsMap.size());
 			return new ArrayList<>(contributorsMap.values());
 		} catch (Exception e) {
+			logger.error("Error fetching contributors for {}/{}: {}", owner, repo, e.getMessage(), e);
 			throw new RuntimeException("Error fetching contributors: " + e.getMessage(), e);
 		}
 	}
@@ -292,6 +318,7 @@ public class VCDataService {
 	 */
 	private List<Commit> getCommitsByAuthorGraphQL(String owner, String repo, String authorLogin, String accessToken) {
 		try {
+			logger.debug("Starting commit fetching for author: {} in {}/{}", authorLogin, owner, repo);
 			List<Commit> allCommits = new ArrayList<>();
 			String cursor = null;
 			boolean hasNextPage = true;
@@ -358,10 +385,11 @@ public class VCDataService {
 					break;
 				}
 			}
-
+			logger.info("Finished fetching commits for author {}. Total: {}", authorLogin, allCommits.size());
 			return allCommits;
 		} catch (Exception e) {
-			throw new RuntimeException("Error fetching commits for author " + authorLogin + ": " + e.getMessage(), e);
+			logger.error("Error fetching commits for author {}: {}", authorLogin, e.getMessage(), e);
+			throw new RuntimeException("Error fetching commits: " + e.getMessage(), e);
 		}
 	}
 
@@ -369,6 +397,7 @@ public class VCDataService {
 	 * Get comprehensive file details with all patch data for a commit using REST API
 	 */
 	private List<FileData> getCommitFilesWithPatchData(String owner, String repo, String sha, String accessToken) {
+		logger.debug("Fetching file patch data for commit SHA: {}", sha);
 		try {
 			String commitUrl = String.format("https://api.github.com/repos/%s/%s/commits/%s", owner, repo, sha);
 
@@ -449,18 +478,21 @@ public class VCDataService {
 								fileName, status, patchData.length(),
 								fileData.getAdditions(), fileData.getDeletions()
 						));
+						logger.debug("Processed file: {}, Status: {}, Additions: {}, Deletions: {}", fileName, status, fileData.getAdditions(), fileData.getDeletions());
 					}
 				}
 
 				return fileDataList;
 			} else {
 				System.err.println("Failed to fetch commit details. Status: " + response.getStatusCode());
+				logger.error("Failed to fetch commit details for SHA {}. Status: {}", sha, response.getStatusCode());
 				return new ArrayList<>();
 			}
 
 		} catch (Exception e) {
 			System.err.println("Error fetching file details for commit " + sha + ": " + e.getMessage());
 			e.printStackTrace();
+			logger.error("Error fetching file details for commit {}: {}", sha, e.getMessage(), e);
 			return new ArrayList<>();
 		}
 	}
@@ -475,6 +507,7 @@ public class VCDataService {
 
 	// Legacy methods for backward compatibility
 	public ContributorsResponse getContributors(String repoUrl, Long userId) {
+		logger.info("LEGACY: Fetching contributors for repo: {} by user ID: {}", repoUrl, userId);
 		try {
 			String[] ownerRepo = extractOwnerAndRepo(repoUrl);
 			String owner = ownerRepo[0];
@@ -484,11 +517,13 @@ public class VCDataService {
 			List<Contributor> contributors = getContributorsGraphQL(owner, repo, accessToken);
 			return new ContributorsResponse(contributors);
 		} catch (Exception e) {
+			logger.error("LEGACY: Error fetching contributors for repo {}: {}", repoUrl, e.getMessage(), e);
 			throw new RuntimeException("Error fetching contributors: " + e.getMessage(), e);
 		}
 	}
 
 	public CommitsResponse getCommitsByAuthor(String repoUrl, String authorName, Long userId) {
+		logger.info("LEGACY: Fetching commits for author: {} in repo: {} by user ID: {}", authorName, repoUrl, userId);
 		try {
 			String[] ownerRepo = extractOwnerAndRepo(repoUrl);
 			String owner = ownerRepo[0];
@@ -498,8 +533,8 @@ public class VCDataService {
 			List<Commit> commits = getCommitsByAuthorGraphQL(owner, repo, authorName, accessToken);
 			return new CommitsResponse(commits, authorName, commits.size());
 		} catch (Exception e) {
+			logger.error("LEGACY: Error fetching commits for author {} in repo {}: {}", authorName, repoUrl, e.getMessage(), e);
 			throw new RuntimeException("Error fetching commits: " + e.getMessage(), e);
 		}
 	}
 }
-
