@@ -70,4 +70,57 @@ public class GithubController implements GithubAPI {
 			response.sendRedirect(frontendUrl + "?auth=error&message=" + e.getMessage());
 		}
 	}
+
+	@Override
+	public ResponseEntity<?> exchangeToken(String code, Long userId) {
+		try {
+			String accessToken = githubService.exchangeCodeForAccessToken(code, userId);
+			return ResponseEntity.ok().body(Map.of(
+					"access_token", accessToken,
+					"message", "Token stored successfully",
+					"user_id", userId != null ? userId : "null"
+			));
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(Map.of("error", "Failed to exchange code for token: " + e.getMessage()));
+		}
+	}
+
+	// TODO: Add functionality to check token expiration
+	@Override
+	public ResponseEntity checkToken(Long userId) {
+		try {
+			Optional<VCToken> token = githubService.getTokenByUserId(userId);
+			if (token.isPresent()) {
+				return ResponseEntity.status(HttpStatus.OK).build();
+			} else {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+			}
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(Map.of("error", "Failed to check token: " + e.getMessage()));
+		}
+	}
+
+	@Override
+	public ResponseEntity<?> getToken(Long userId) {
+		try {
+			Optional<VCToken> token = githubService.getTokenByUserId(userId);
+			if (token.isPresent()) {
+				return ResponseEntity.ok().body(Map.of(
+						"user_id", userId,
+						"access_token", token.get().getAccess_token(),
+						"misc_info", token.get().getMisc_info() != null ? token.get().getMisc_info() : ""
+				));
+			} else {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND)
+						.body(Map.of("error", "No token found for user_id: " + userId));
+			}
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(Map.of("error", "Failed to retrieve token: " + e.getMessage()));
+		}
+	}
+
 }

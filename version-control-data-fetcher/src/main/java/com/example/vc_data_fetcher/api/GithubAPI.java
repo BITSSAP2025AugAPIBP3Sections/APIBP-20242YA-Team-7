@@ -25,4 +25,7 @@ public interface GithubAPI {
 	@GetMapping("/check-token")
 	ResponseEntity<?> checkToken(@RequestParam("user_id") Long userId);
 
+	@GetMapping("/get-token")
+	ResponseEntity<?> getToken(@RequestParam("user_id") Long userId);
+
 }
