@@ -14,10 +14,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api")
 public class CodeAnalysisController {
+
+    private static final Logger logger = LoggerFactory.getLogger(CodeAnalysisController.class);
 
     @Autowired
     private CodeAnalysisService codeAnalysisService;
@@ -25,17 +29,20 @@ public class CodeAnalysisController {
     @PostMapping("/analyze")
     public HashMap<String, String> analyzeCode(String repoUrl, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
+        logger.info("User {} starting analysis for repo: {}", user.getUsername(), repoUrl);
         return codeAnalysisService.startAnalyzingCode(repoUrl, user);
     }
 
     @PostMapping("/analysis/callback/{id}")
     public boolean receiveAnalysisResult(@PathVariable Long id, @RequestBody String result) {
+        logger.info("Received analysis callback for ID: {}", id);
         return codeAnalysisService.handleAnalysisCallback(id, result);
     }
 
     @GetMapping("/analyses")
     public List<CodeAnalysis> getAllAnalyses(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
+        logger.debug("Fetching all analyses for user: {}", user.getUsername());
         return codeAnalysisService.getAllAnalysesForUser(user);
     }
 }
