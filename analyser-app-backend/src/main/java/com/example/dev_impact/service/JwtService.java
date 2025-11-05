@@ -14,9 +14,13 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class JwtService {
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtService.class);
 
     private final String SECRET_KEY = "bc0c23f9a10eb1e89824186287d8d20cfdc33bcd93c3cc4d92c9d404714686da";
 
@@ -33,6 +37,7 @@ public class JwtService {
 
     public boolean isValid(String token, UserDetails user) {
         String username = extractUsername(token);
+        logger.debug("Validating token for user: {}", username);
 
         boolean validToken = tokenRepository
                 .findByToken(token)
@@ -67,6 +72,7 @@ public class JwtService {
 
 
     public String generateToken(User user) {
+        logger.info("Generating JWT for user: {}", user.getUsername());
         String token = Jwts
                 .builder()
                 .setSubject(user.getUsername())

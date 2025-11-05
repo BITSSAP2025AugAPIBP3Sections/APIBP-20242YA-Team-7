@@ -5,6 +5,9 @@ import com.example.dev_impact.model.AnalysisStatus;
 import com.example.dev_impact.model.CodeAnalysis;
 import com.example.dev_impact.model.User;
 import com.example.dev_impact.repository.CodeAnalysisRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -16,11 +19,18 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class CodeAnalysisService {
 
+    private static final Logger logger = LoggerFactory.getLogger(CodeAnalysisService.class);
+
     private CodeAnalysisRepository codeAnalysisRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Value("${version_control_service.url}")
     private String vcsServiceUrl;
@@ -42,9 +52,11 @@ public class CodeAnalysisService {
     }
 
     public HashMap<String, String> startAnalyzingCode(String repoUrl, User user) {
+        logger.info("Starting analysis request for repo: {} by user: {}", repoUrl, user.getUsername());
         HashMap<String, String> response = new HashMap<>();
         try {
             if (!isValidRepo(repoUrl, user)) {
+                logger.warn("Repository validation failed for repo: {}", repoUrl);
                 response.put("status", "error");
                 response.put("message", Message.INVALID_REPO_URL);
                 return response;
@@ -55,6 +67,7 @@ public class CodeAnalysisService {
             codeAnalysis.setUser(user);
             codeAnalysis.setStatus(AnalysisStatus.IN_PROGRESS);
             codeAnalysisRepository.save(codeAnalysis);
+            logger.info("Created new CodeAnalysis entry with ID: {}", codeAnalysis.getId());
 
             requestCodeAnalysis(repoUrl, codeAnalysis);
 
@@ -62,6 +75,7 @@ public class CodeAnalysisService {
             response.put("message", Message.ANALYSIS_IN_PROGRESS);
             return response;
         } catch (Exception e) {
+            logger.error("Analysis failed to start for repo: {}. Error: {}", repoUrl, e.getMessage(), e);
             response.put("status", "error");
             response.put("message", Message.ANALYSIS_FAILED);
             return response;
@@ -69,23 +83,29 @@ public class CodeAnalysisService {
     }
 
     public boolean handleAnalysisCallback(Long analysisId, String result) {
+        logger.info("Processing analysis callback for ID: {}", analysisId);
         try {
             CodeAnalysis codeAnalysis = codeAnalysisRepository.findById(analysisId).orElseThrow();
             codeAnalysis.setStatus(AnalysisStatus.COMPLETED);
             codeAnalysis.setResult(result);
             codeAnalysisRepository.save(codeAnalysis);
+            logger.info("Analysis ID {} updated to COMPLETED.", analysisId);
+
             sendEmailNotification(codeAnalysis.getUser(), Message.ANALYSIS_COMPLETED_EMAIL_SUBJECT, Message.ANALYSIS_COMPLETED_EMAIL_BODY.replace("{repoUrl}", codeAnalysis.getRepoUrl()));
             return true;
         } catch (Exception e) {
+            logger.error("Failed to handle analysis callback for ID {}: {}", analysisId, e.getMessage(), e);
             return false;
         }
     }
 
     public List<CodeAnalysis> getAllAnalysesForUser(User user) {
+        logger.debug("Fetching all analyses for user ID: {}", user.getId());
         return codeAnalysisRepository.findByUserId(user.getId());
     }
 
     private void sendEmailNotification(User user, String subject, String body) {
+        logger.info("Attempting to send email notification to {} for subject: {}", user.getUsername(), subject);
         try {
             String boundary = "----Boundary" + System.currentTimeMillis();
 
@@ -124,6 +144,7 @@ public class CodeAnalysisService {
     }
 
     private boolean isValidRepo(String repoUrl, User user) {
+        logger.debug("Validating repository URL: {} for user ID: {}", repoUrl, user.getId());
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
@@ -132,13 +153,16 @@ public class CodeAnalysisService {
                     .POST(HttpRequest.BodyPublishers.ofString("{\"repoUrl\":\"" + repoUrl + "\", \"userId\":\"" + user.getId() + "\"}"))
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            logger.debug("Repo validation response code: {}", response.statusCode());
             return response.statusCode() == 200;
         } catch (URISyntaxException | IOException | InterruptedException e) {
+            logger.error("Repo validation failed due to connection error: {}", e.getMessage());
             return false;
         }
     }
 
     private void requestCodeAnalysis(String repoUrl, CodeAnalysis codeAnalysis) {
+        logger.info("Requesting analysis from external service for ID: {}", codeAnalysis.getId());
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
@@ -149,6 +173,7 @@ public class CodeAnalysisService {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             response.statusCode();
         } catch (URISyntaxException | IOException | InterruptedException e) {
+            logger.error("Failed to request code analysis for ID {}: {}", codeAnalysis.getId(), e.getMessage());
         }
     }
 }
