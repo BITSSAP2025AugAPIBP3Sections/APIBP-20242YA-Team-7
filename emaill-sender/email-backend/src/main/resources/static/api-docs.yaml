@@ -1,0 +1,100 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+paths:
+  /api/emails:
+    get:
+      tags:
+      - email-controller
+      operationId: getAllEmails
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EmailEntity"
+    post:
+      tags:
+      - email-controller
+      operationId: sendEmail
+      parameters:
+      - name: fromAddress
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: toAddress
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: subject
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: body
+        in: query
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                attachment:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /api/emails/health:
+    get:
+      tags:
+      - email-controller
+      operationId: healthCheck
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+components:
+  schemas:
+    EmailEntity:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        toAddress:
+          type: string
+        fromAddress:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        status:
+          type: string
+        attachmentName:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
