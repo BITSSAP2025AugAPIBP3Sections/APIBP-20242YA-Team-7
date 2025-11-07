@@ -47,36 +47,49 @@ const SendEmail = () => {
 
   const onSubmit = async (data: EmailFormData) => {
     setIsSending(true);
-    
-    // Simulate sending delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Simulate random success/failure
-    const statuses = ["Success", "Pending", "Failed"];
-    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-    
-    setIsSending(false);
-    
-    if (randomStatus === "Success") {
-      toast({
-        title: "✓ Email Sent Successfully!",
-        description: `Your email to ${data.to} has been sent.`,
-        variant: "default",
+
+    try {
+      const formData = new FormData();
+      formData.append("fromAddress", "no-reply@yourapp.com");
+      formData.append("toAddress", data.to);
+      formData.append("subject", data.subject);
+      formData.append("body", data.message);
+
+      if (files.length > 0) {
+        formData.append("attachment", files[0]); // Send the actual file
+      }
+
+      const response = await fetch("http://localhost:8080/api/emails", {
+        method: "POST",
+        body: formData,
       });
-      reset();
-      setFiles([]);
-    } else if (randomStatus === "Pending") {
+
+      const result = await response.text();
+
+      if (response.ok && !result.startsWith("Error")) {
+        toast({
+          title: "✓ Email Sent Successfully!",
+          description: `Your email to ${data.to} has been sent.`,
+          variant: "default",
+        });
+        reset();
+        setFiles([]);
+      } else {
+        toast({
+          title: "✗ Email Failed",
+          description: result || "Something went wrong.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
       toast({
-        title: "⏳ Email Pending",
-        description: "Your email is being processed and will be sent shortly.",
-        variant: "default",
-      });
-    } else {
-      toast({
-        title: "✗ Email Failed",
-        description: "There was an error sending your email. Please try again.",
+        title: "✗ Network Error",
+        description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setIsSending(false);
     }
   };
 
