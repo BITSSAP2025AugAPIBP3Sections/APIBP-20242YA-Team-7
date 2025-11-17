@@ -2,45 +2,45 @@ import json
 import logging
 import requests
 from .models import AnalysisData
-from .constants import GITHUB_MS_URL
+from .constants import GEMINI_API_URL, GEMINI_API_KEY, GITHUB_MS_URL
 from .prompts import (
     EXTRACT_CONTRIBUTORS_PROMPT,
     ANALYZE_CONTRIBUTOR_IMPACT_PROMPT,
     ASSIGN_PERCENTAGES_PROMPT,
     GENERATE_FINAL_SUMMARY_PROMPT
 )
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
-def call_llm_api(prompt, model="llama3"):
-    logger.info("Sending request to local LLM (Ollama).")
+def call_gemini_api(prompt):
+    """Helper to call Gemini API and return parsed JSON output."""
+    logger.info("Sending request to Gemini API.")
     try:
         response = requests.post(
-            "http://localhost:11434/api/generate",
-            json={
-                "model": model,
-                "prompt": prompt,
-                "stream": False
+            GEMINI_API_URL,
+            headers={
+                "x-goog-api-key": GEMINI_API_KEY,
+                "Content-Type": "application/json",
             },
+            json={"contents": [{"parts": [{"text": prompt}]}]},
             timeout=120
         )
+        logger.debug(f"Gemini API raw response: {response.text[:500]}...")  # log first 500 chars
         response.raise_for_status()
-        text_output = response.json().get("response", "")
-        try:
-            return json.loads(text_output)
-        except json.JSONDecodeError:
-            return text_output
 
-    except requests.RequestException as e:
-        logger.error(f"Local LLM API error: {e}")
+        text_output = response.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+        return json.loads(text_output)
+    except (requests.RequestException, json.JSONDecodeError) as e:
+        logger.error(f"Gemini API error: {e}")
         return None
 
 
 def extract_contributors(repo_data):
     logger.info("Starting Step 1: Extract contributors.")
     prompt = EXTRACT_CONTRIBUTORS_PROMPT.format(repo_data=json.dumps(repo_data, indent=2))
-    result = call_llm_api(prompt)
+    result = call_gemini_api(prompt)
     if result:
         logger.info("Step 1 completed: Contributors extracted successfully.")
     else:
@@ -51,7 +51,7 @@ def extract_contributors(repo_data):
 def analyze_contributor_impact(contributors_json):
     logger.info("Starting Step 2: Analyze contributor impact.")
     prompt = ANALYZE_CONTRIBUTOR_IMPACT_PROMPT.format(contributors_json=json.dumps(contributors_json, indent=2))
-    result = call_llm_api(prompt)
+    result = call_gemini_api(prompt)
     if result:
         logger.info("Step 2 completed: Contributor impact analysis successful.")
     else:
@@ -62,7 +62,7 @@ def analyze_contributor_impact(contributors_json):
 def assign_percentages(impact_json):
     logger.info("Starting Step 3: Assign contribution percentages.")
     prompt = ASSIGN_PERCENTAGES_PROMPT.format(impact_json=json.dumps(impact_json, indent=2))
-    result = call_llm_api(prompt)
+    result = call_gemini_api(prompt)
     if result:
         logger.info("Step 3 completed: Percentages assigned successfully.")
     else:
@@ -76,7 +76,7 @@ def generate_final_summary(contribution_json, repo_data):
         contribution_json=json.dumps(contribution_json, indent=2),
         repo_data=json.dumps(repo_data, indent=2)
     )
-    result = call_llm_api(prompt)
+    result = call_gemini_api(prompt)
     if result:
         logger.info("Step 4 completed: Final summary generated successfully.")
     else:
