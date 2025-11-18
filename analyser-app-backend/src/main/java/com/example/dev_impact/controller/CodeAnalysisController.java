@@ -3,6 +3,7 @@ package com.example.dev_impact.controller;
 import com.example.dev_impact.model.CodeAnalysis;
 import com.example.dev_impact.model.User;
 import com.example.dev_impact.service.CodeAnalysisService;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,10 +35,12 @@ public class CodeAnalysisController {
     }
 
     @PostMapping("/analysis/callback/{id}")
-    public boolean receiveAnalysisResult(@PathVariable Long id, @RequestBody String result) {
-        logger.info("Received analysis callback for ID: {}", id);
-        return codeAnalysisService.handleAnalysisCallback(id, result);
+    public boolean receiveAnalysisResult(@PathVariable Long id, @RequestBody JsonNode report) {
+        logger.info("✅ Received analysis callback for ID: {}", id);
+        return codeAnalysisService.handleAnalysisCallback(id, report);
+
     }
+
 
     @GetMapping("/analyses")
     public List<CodeAnalysis> getAllAnalyses(Authentication authentication) {

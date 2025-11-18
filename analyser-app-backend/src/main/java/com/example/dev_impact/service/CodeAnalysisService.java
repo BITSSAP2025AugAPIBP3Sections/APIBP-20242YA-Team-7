@@ -5,8 +5,10 @@ import com.example.dev_impact.model.AnalysisStatus;
 import com.example.dev_impact.model.CodeAnalysis;
 import com.example.dev_impact.model.User;
 import com.example.dev_impact.repository.CodeAnalysisRepository;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,8 +86,9 @@ public class CodeAnalysisService {
         }
     }
 
-    public boolean handleAnalysisCallback(Long analysisId, String result) {
-        logger.info("Processing analysis callback for ID: {}", analysisId);
+    @Transactional
+    public boolean handleAnalysisCallback(Long analysisId, JsonNode result) {
+
         try {
             CodeAnalysis codeAnalysis = codeAnalysisRepository.findById(analysisId).orElseThrow();
             codeAnalysis.setStatus(AnalysisStatus.COMPLETED);
@@ -91,13 +96,20 @@ public class CodeAnalysisService {
             codeAnalysisRepository.save(codeAnalysis);
             logger.info("Analysis ID {} updated to COMPLETED.", analysisId);
 
-            sendEmailNotification(codeAnalysis.getUser(), Message.ANALYSIS_COMPLETED_EMAIL_SUBJECT, Message.ANALYSIS_COMPLETED_EMAIL_BODY.replace("{repoUrl}", codeAnalysis.getRepoUrl()));
+            sendEmailNotification(
+                    codeAnalysis.getUser(),
+                    Message.ANALYSIS_COMPLETED_EMAIL_SUBJECT,
+                    Message.ANALYSIS_COMPLETED_EMAIL_BODY.replace("{repoUrl}", codeAnalysis.getRepoUrl())
+            );
+
             return true;
+
         } catch (Exception e) {
             logger.error("Failed to handle analysis callback for ID {}: {}", analysisId, e.getMessage(), e);
             return false;
         }
     }
+
 
     public List<CodeAnalysis> getAllAnalysesForUser(User user) {
         logger.debug("Fetching all analyses for user ID: {}", user.getId());
@@ -164,16 +176,38 @@ public class CodeAnalysisService {
     private void requestCodeAnalysis(String repoUrl, CodeAnalysis codeAnalysis) {
         logger.info("Requesting analysis from external service for ID: {}", codeAnalysis.getId());
         try {
-            HttpClient client = HttpClient.newHttpClient();
+            // Build the request payload dynamically
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("repo_url", repoUrl);
+            requestBody.put("call_back_url", appUrl + "/api/analysis/callback/" + codeAnalysis.getId());
+            requestBody.put("user_id", codeAnalysis.getUser().getId());
+
+            // Convert the map to JSON using Jackson
+            ObjectMapper mapper = new ObjectMapper();
+            String jsonBody = mapper.writeValueAsString(requestBody);
+
+            // Build the HTTP request
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(analyzerServiceUrl + "/process/"))
-                    .POST(HttpRequest.BodyPublishers.ofString("{\"repo_url\":\"" + repoUrl + "\", \"call_back_url" +
-                            "\":\"" + appUrl + "/api/analysis/callback/" + codeAnalysis.getId() + "\", \"user_id\":\"" + codeAnalysis.getUser().getId()+ "\"}"))
+                    .uri(URI.create(analyzerServiceUrl + "/v1.0.0/initiate/"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                     .build();
+
+            // Send the request and log the response
+            HttpClient client = HttpClient.newHttpClient();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            response.statusCode();
-        } catch (URISyntaxException | IOException | InterruptedException e) {
-            logger.error("Failed to request code analysis for ID {}: {}", codeAnalysis.getId(), e.getMessage());
+
+            if (response.statusCode() == 200 || response.statusCode() == 201) {
+                logger.info("✅ Code analysis request successful for ID {}. Response: {}",
+                        codeAnalysis.getId(), response.body());
+            } else {
+                logger.warn("⚠️ Code analysis request returned status {} for ID {}. Response: {}",
+                        response.statusCode(), codeAnalysis.getId(), response.body());
+            }
+
+        } catch (IOException | InterruptedException e) {
+            logger.error("❌ Failed to request code analysis for ID {}: {}", codeAnalysis.getId(), e.getMessage(), e);
+            Thread.currentThread().interrupt(); // good practice when catching InterruptedException
         }
     }
 
@@ -182,3 +216,6 @@ public class CodeAnalysisService {
         return codeAnalysisRepository.findById(id).orElseThrow(() -> new Exception("CodeAnalysis not found with id: " + id));
     }
 }
+
+
+

@@ -1,5 +1,7 @@
 package com.example.dev_impact.model;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 
 @Entity
 @Table(name = "code_analysis")
@@ -35,7 +38,8 @@ public class CodeAnalysis {
     @Column(name = "status")
     private AnalysisStatus status;
 
-    @Column(name = "result")
-    private String result;
+    @Type(JsonType.class)
+    @Column(columnDefinition = "jsonb")
+    private JsonNode result;
 
 }
