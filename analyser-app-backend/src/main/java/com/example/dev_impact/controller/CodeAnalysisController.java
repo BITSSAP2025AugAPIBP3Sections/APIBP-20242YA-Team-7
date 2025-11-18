@@ -45,4 +45,11 @@ public class CodeAnalysisController {
         logger.debug("Fetching all analyses for user: {}", user.getUsername());
         return codeAnalysisService.getAllAnalysesForUser(user);
     }
+
+    @GetMapping("/analysis/{id}")
+    public CodeAnalysis getAnalysisById(@PathVariable Long id, Authentication authentication) throws Exception {
+        User user = (User) authentication.getPrincipal();
+        logger.debug("Fetching analysis ID: {} for user: {}", id, user.getUsername());
+        return codeAnalysisService.getCodeAnalysisById(id);
+    }
 }

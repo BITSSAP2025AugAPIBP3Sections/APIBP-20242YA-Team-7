@@ -176,4 +176,9 @@ public class CodeAnalysisService {
             logger.error("Failed to request code analysis for ID {}: {}", codeAnalysis.getId(), e.getMessage());
         }
     }
+
+    public CodeAnalysis getCodeAnalysisById(Long id) throws Exception {
+        logger.debug("Fetching CodeAnalysis by ID: {}", id);
+        return codeAnalysisRepository.findById(id).orElseThrow(() -> new Exception("CodeAnalysis not found with id: " + id));
+    }
 }

@@ -1,0 +1,27 @@
+filebeat.inputs:
+  - type: log
+    paths:
+      - /app/springlogs/app1.log
+    fields:
+      service: VersionControl_MS
+
+  - type: log
+    paths:
+      - /app/springlogs/app2.log
+    fields:
+      service: ApplicationBackend
+
+  - type: log
+    paths:
+      - /app/springlogs/app3.log
+    fields:
+      service: Notification_MS
+
+  - type: log
+    paths:
+      - /app/djangologs/django.log
+    fields:
+      service: CodeAnalyser
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
