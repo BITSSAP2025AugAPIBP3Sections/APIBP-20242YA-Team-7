@@ -6,6 +6,7 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
+      - xpack.secu
     ports:
       - "9200:9200"
 
@@ -23,7 +24,7 @@ services:
       - elasticsearch
     volumes:
       - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
-      - ../version-control-data-fetcher/logs:/app/springlogs/ms1
-      - ../analyser-app-backend/logs:/app/springlogs/ms2
-      - ../emaill-sender/email-backend/logs:/app/springlogs/ms3
-      - ../code-contribution-analyser/logs:/app/djangologs
+      - ../version-control-data-fetcher/logs:/logs/version
+      - ../analyser-app-backend/logs:/logs/application
+      - ../emaill-sender/email-backend/logs:/logs/notification
+      - ../code-contribution-analyser/codeContributorProcessor/logs:/logs/django

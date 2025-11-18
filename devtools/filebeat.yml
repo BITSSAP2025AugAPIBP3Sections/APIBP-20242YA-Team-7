@@ -1,40 +1,112 @@
 filebeat.inputs:
 
-  # --- VERSION CONTROL MICRO SERVICE ---
-  - type: log
-    enabled: true
+  - type: filestream
+
+    id: version-control-data-fetcher
+
     paths:
-      - /app/springlogs/ms1/app1.log
+
+      - /logs/version/*.log
+
     fields:
-      service: version-control-ms
+
+      service.name: version-control-data-fetcher
+
     fields_under_root: true
 
-  # --- APPLICATION BACKEND ---
-  - type: log
-    enabled: true
+  - type: filestream
+
+    id: analyser-app-backend
+
     paths:
-      - /app/springlogs/ms2/app2.log
+
+      - /logs/application/*.log
+
     fields:
-      service: application-backend
+
+      service.name: analyser-app-backend
+
     fields_under_root: true
 
-  # --- NOTIFICATION MS ---
-  - type: log
-    enabled: true
+  - type: filestream
+
+    id: email-backend
+
     paths:
-      - /app/springlogs/ms3/app3.log
+
+      - /logs/notification/*.log
+
     fields:
-      service: notification-ms
+
+      service.name: email-backend
+
     fields_under_root: true
 
-  # --- DJANGO SERVICE ---
-  - type: log
-    enabled: true
+  - type: filestream
+
+    id: code-contribution-analyser
+
     paths:
-      - /app/djangologs/django.log
+
+      - /logs/django/*.log
+
     fields:
-      service: code-analyser
+
+      service.name: code-contribution-analyser
+
     fields_under_root: true
+
+
+##############################
+
+# IMPORTANT DATA STREAM MODE
+
+##############################
 
 output.elasticsearch:
+
   hosts: ["http://elasticsearch:9200"]
+
+  index: "filebeat"
+
+  indices:
+
+    - index: "filebeat"
+
+
+#################################
+
+# MANDATORY FOR DATA STREAM
+
+#################################
+
+setup.template.enabled: true
+
+setup.template.name: "filebeat"
+
+setup.template.pattern: "filebeat"
+
+setup.template.type: "index"
+
+# ENABLE ILM
+
+setup.ilm.enabled: true
+
+setup.ilm.rollover_alias: "filebeat"
+
+setup.ilm.pattern: "{now/d}-000001"
+
+setup.ilm.policy_name: "filebeat"
+
+##############################
+
+# CONNECT KIBANA FOR TEMPLATE
+
+##############################
+
+setup.kibana:
+
+  host: "http://kibana:5601"
+
+logging.level: info
+
