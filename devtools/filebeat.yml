@@ -1,0 +1,40 @@
+filebeat.inputs:
+
+  # --- VERSION CONTROL MICRO SERVICE ---
+  - type: log
+    enabled: true
+    paths:
+      - /app/springlogs/ms1/app1.log
+    fields:
+      service: version-control-ms
+    fields_under_root: true
+
+  # --- APPLICATION BACKEND ---
+  - type: log
+    enabled: true
+    paths:
+      - /app/springlogs/ms2/app2.log
+    fields:
+      service: application-backend
+    fields_under_root: true
+
+  # --- NOTIFICATION MS ---
+  - type: log
+    enabled: true
+    paths:
+      - /app/springlogs/ms3/app3.log
+    fields:
+      service: notification-ms
+    fields_under_root: true
+
+  # --- DJANGO SERVICE ---
+  - type: log
+    enabled: true
+    paths:
+      - /app/djangologs/django.log
+    fields:
+      service: code-analyser
+    fields_under_root: true
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]

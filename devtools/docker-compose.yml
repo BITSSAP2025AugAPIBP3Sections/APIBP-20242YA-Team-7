@@ -23,7 +23,7 @@ services:
       - elasticsearch
     volumes:
       - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
-      - ../your-project/ms1/logs:/app/springlogs
-      - ../your-project/ms2/logs:/app/springlogs
-      - ../your-project/ms3/logs:/app/springlogs
-      - ../your-project/django/logs:/app/djangologs
+      - ../version-control-data-fetcher/logs:/app/springlogs/ms1
+      - ../analyser-app-backend/logs:/app/springlogs/ms2
+      - ../emaill-sender/email-backend/logs:/app/springlogs/ms3
+      - ../code-contribution-analyser/logs:/app/djangologs

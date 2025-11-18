@@ -94,20 +94,25 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'json': {
+            'format': (
+                '{"timestamp": "%(asctime)s", '
+                '"level": "%(levelname)s", '
+                '"service": "code-analyser", '
+                '"message": "%(message)s"}'
+            )
+        }
+    },
     'handlers': {
-        'json_file': {
+        'file': {
             'class': 'logging.FileHandler',
             'filename': 'logs/django.log',
             'formatter': 'json',
-        },
-    },
-    'formatters': {
-        'json': {
-            'format': '{"time": "%(asctime)s", "level": "%(levelname)s", "service": "CodeAnalyser", "message": "%(message)s"}'
         }
     },
     'root': {
-        'handlers': ['json_file'],
+        'handlers': ['file'],
         'level': 'INFO',
     },
 }
