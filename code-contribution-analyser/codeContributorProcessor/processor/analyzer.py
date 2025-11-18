@@ -31,6 +31,9 @@ def call_gemini_api(prompt):
         response.raise_for_status()
 
         text_output = response.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+        text_output = text_output.replace("```json", "")
+        text_output = text_output.replace("```", "")
+        logger.info(text_output)
         return json.loads(text_output)
     except (requests.RequestException, json.JSONDecodeError) as e:
         logger.error(f"Gemini API error: {e}")
