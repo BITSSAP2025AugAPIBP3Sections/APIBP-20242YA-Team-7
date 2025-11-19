@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1.0.0/auth")
 public interface GithubAPI {
 
 	@GetMapping("/github-login")

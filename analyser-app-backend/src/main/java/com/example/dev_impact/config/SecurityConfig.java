@@ -48,8 +48,8 @@ public class SecurityConfig {
                                 "/api-docs.yaml"
                         ).permitAll()
                         // Allow your existing public endpoints
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/api/analysis/callback/**").permitAll()
+                        .requestMatchers("/api/v1.0.0/auth/**").permitAll()
+                        .requestMatchers("/api/v1.0.0/analyze/callback/**").permitAll()
                         // Everything else requires authentication
                         .anyRequest().authenticated()
                 )

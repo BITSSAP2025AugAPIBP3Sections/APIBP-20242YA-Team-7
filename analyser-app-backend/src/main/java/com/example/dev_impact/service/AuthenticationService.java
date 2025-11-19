@@ -120,7 +120,7 @@ public class AuthenticationService {
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI( vcsServiceUrl+ "/api/auth/github-login?user_id=" + user.getId().toString()))
+                    .uri(new URI( vcsServiceUrl+ "/api/v1.0.0/auth/github-login?user_id=" + user.getId().toString()))
                     .GET()
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -137,7 +137,7 @@ public class AuthenticationService {
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI( vcsServiceUrl+ "/api/auth/check-token?user_id=" + user.getId().toString()))
+                    .uri(new URI( vcsServiceUrl+ "/api/v1.0.0/auth/check-token?user_id=" + user.getId().toString()))
                     .GET()
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());

@@ -5,10 +5,15 @@ info:
   version: 1.0.0
 
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8080/api/v1.0.0
     description: Local Development Server
 
 paths:
+
+  #################################
+  # AUTHENTICATION
+  #################################
+
   /auth/register:
     post:
       summary: Register a new user
@@ -45,7 +50,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthenticationResponseDTO'
 
-  /github/oauth:
+  /auth/github/oauth:
     get:
       summary: Get GitHub OAuth URL for user authorization
       tags: [Authentication]
@@ -60,7 +65,7 @@ paths:
                 type: string
                 example: https://github.com/login/oauth/authorize?client_id=xxxx
 
-  /github/status:
+  /auth/github/status:
     get:
       summary: Check GitHub connection status for the authenticated user
       tags: [Authentication]
@@ -75,7 +80,11 @@ paths:
                 type: boolean
                 example: true
 
-  /api/analyze:
+  #################################
+  # CODE ANALYSIS
+  #################################
+
+  /analyze/repo:
     post:
       summary: Start code analysis for a given repository
       tags: [Code Analysis]
@@ -101,7 +110,7 @@ paths:
                   analysisId: "1"
                   message: "Analysis started successfully"
 
-  /api/analysis/callback/{id}:
+  /analyze/callback/{id}:
     post:
       summary: Receive code analysis results callback
       tags: [Code Analysis]
@@ -115,10 +124,12 @@ paths:
       requestBody:
         required: true
         content:
-          text/plain:
+          application/json:
             schema:
-              type: string
-              example: "Code quality score: 90%"
+              type: object
+              example:
+                qualityScore: 90
+                issuesFound: 3
       responses:
         '200':
           description: Returns whether the callback was processed successfully
@@ -128,7 +139,7 @@ paths:
                 type: boolean
                 example: true
 
-  /api/analyses:
+  /analyze/allProjects:
     get:
       summary: Get all code analyses for the authenticated user
       tags: [Code Analysis]
@@ -144,8 +155,31 @@ paths:
                 items:
                   $ref: '#/components/schemas/CodeAnalysis'
 
+  /analyze/project/{id}:
+    get:
+      summary: Get code analysis for a specific project by ID
+      tags: [Code Analysis]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Returns the code analysis result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodeAnalysis'
+
 components:
+
   schemas:
+
     User:
       type: object
       properties:

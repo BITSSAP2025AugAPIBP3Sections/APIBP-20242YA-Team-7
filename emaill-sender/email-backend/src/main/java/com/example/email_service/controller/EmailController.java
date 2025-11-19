@@ -14,7 +14,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/emails")
+@RequestMapping("/api/v1.0.0/emails")
 @CrossOrigin(origins = "*")
 public class EmailController {
 

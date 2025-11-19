@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1.0.0/analyze")
 public class CodeAnalysisController {
 
     private static final Logger logger = LoggerFactory.getLogger(CodeAnalysisController.class);
@@ -27,29 +27,27 @@ public class CodeAnalysisController {
     @Autowired
     private CodeAnalysisService codeAnalysisService;
 
-    @PostMapping("/analyze")
+    @PostMapping("/repo")
     public HashMap<String, String> analyzeCode(String repoUrl, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         logger.info("User {} starting analysis for repo: {}", user.getUsername(), repoUrl);
         return codeAnalysisService.startAnalyzingCode(repoUrl, user);
     }
 
-    @PostMapping("/analysis/callback/{id}")
+    @PostMapping("/callback/{id}")
     public boolean receiveAnalysisResult(@PathVariable Long id, @RequestBody JsonNode report) {
-        logger.info("✅ Received analysis callback for ID: {}", id);
+        logger.info("Received analysis callback for ID: {}", id);
         return codeAnalysisService.handleAnalysisCallback(id, report);
-
     }
 
-
-    @GetMapping("/analyses")
+    @GetMapping("/allProjects")
     public List<CodeAnalysis> getAllAnalyses(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         logger.debug("Fetching all analyses for user: {}", user.getUsername());
         return codeAnalysisService.getAllAnalysesForUser(user);
     }
 
-    @GetMapping("/analysis/{id}")
+    @GetMapping("/project/{id}")
     public CodeAnalysis getAnalysisById(@PathVariable Long id, Authentication authentication) throws Exception {
         User user = (User) authentication.getPrincipal();
         logger.debug("Fetching analysis ID: {} for user: {}", id, user.getUsername());

@@ -138,7 +138,7 @@ public class CodeAnalysisService {
                             "--" + boundary + "--\r\n";
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(emailServiceUrl + "/api/emails"))
+                    .uri(new URI(emailServiceUrl + "/api/v1.0.0/emails"))
                     .header("Content-Type", "multipart/form-data; boundary=" + boundary)
                     .POST(HttpRequest.BodyPublishers.ofString(formData))
                     .build();
@@ -160,7 +160,7 @@ public class CodeAnalysisService {
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(vcsServiceUrl + "/api/repo-validate"))
+                    .uri(new URI(vcsServiceUrl + "/api/v1.0.0/repo-validate"))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString("{\"repoUrl\":\"" + repoUrl + "\", \"userId\":\"" + user.getId() + "\"}"))
                     .build();
@@ -179,7 +179,7 @@ public class CodeAnalysisService {
             // Build the request payload dynamically
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("repo_url", repoUrl);
-            requestBody.put("call_back_url", appUrl + "/api/analysis/callback/" + codeAnalysis.getId());
+            requestBody.put("call_back_url", appUrl + "/api/v1.0.0/analyze/callback/" + codeAnalysis.getId());
             requestBody.put("user_id", codeAnalysis.getUser().getId());
 
             // Convert the map to JSON using Jackson

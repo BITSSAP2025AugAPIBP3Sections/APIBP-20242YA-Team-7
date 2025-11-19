@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 @Controller
 @RestController
+@RequestMapping("/api/v1.0.0")
 public class VCDataController {
 
 	private static final Logger logger = LoggerFactory.getLogger(VCDataController.class);
@@ -50,7 +52,7 @@ public class VCDataController {
 		}
 	}
 
-	@PostMapping("/api/repo-validate")
+	@PostMapping("/repo-validate")
 	public ResponseEntity checkAccess(@RequestBody CheckAccessRequest request) {
 		logger.info("REST: Validating repo access for repo: {} by user ID: {}", request.getRepoUrl(), request.getUserId());
 		try {
