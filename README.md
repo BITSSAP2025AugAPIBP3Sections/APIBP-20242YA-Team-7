@@ -57,13 +57,13 @@ The following table lists the default ports for each component. All external req
  
 | Component | Port | Purpose | Note |
 | :--- | :--- | :--- | :--- |
-| **Main App Frontend** | `3000` (Example) | User Interface | |
-| **Kong API Gateway** | `8080` (Example) | **Router Entry Point** | Frontend calls this port. Routes to Main App Backend. |
-| **Main App Backend** | `8001` (Example) | Core Backend / JWT Auth / Data Storage | Only reachable internally or via Kong. |
-| **Version Control Data Fetcher** | `8002` (Example) | GitHub Data Retrieval | Internal use by Main App Backend/Analyser. |
-| **Code Analyser Backend** | `8003` (Example) | AI Analysis and Calculation | Internal use by Main App Backend. |
-| **Email Sender** | `8004` (Example) | Email Notification Service | Internal use by Main App Backend. |
-| **Kibana** | `5601` (Example) | Centralized Logging Dashboard | For debugging and monitoring. |
+| **Main App Frontend** | `3000` | User Interface | Captures User Interaction |
+| **Kong API Gateway** | `8000`  | **Router Entry Point** | Frontend calls this port. Routes to Main App Backend. |
+| **Main App Backend** | `8083`  | Core Backend / JWT Auth / Data Storage | Interacts with Frontend or with Kong. |
+| **Version Control Data Fetcher** | `8081` | GitHub Data Retrieval | Internal use by Main App Backend/Analyser. |
+| **Code Analyser Backend** | `8085` | AI Analysis and Calculation | Internal use by Main App Backend. |
+| **Email Sender** | `8082` | Email Notification Service | Internal use by Main App Backend. |
+| **Kibana** | `5601` | Centralized Logging Dashboard | For debugging and monitoring. |
  
 ---
  
@@ -75,3 +75,11 @@ While **Dev Impact** provides powerful analysis, users should be aware of the fo
 * **Private Repository Access Scope:** The granted GitHub OAuth token only allows access to repositories the authenticated user is a part of. It cannot analyze repos the user doesn't have clone/read access to.
 * **Analysis Time:** For very large repositories with extensive commit history, the **Code Analyser Backend** may take a significant amount of time to complete its processing and AI analysis.
 * **AI Interpretation:** The quality and accuracy of the contribution summary and impact analysis are dependent on the training and sophistication of the integrated AI model. Edge cases or unconventional development patterns might be misinterpreted.
+ 
+---
+## Setup
+ 
+For **Support and Setup** regarding the project, please refer the **[SUPPORT.md](https://github.com/BITSSAP2025AugAPIBP3Sections/APIBP-20242YA-Team-7/blob/main/SUPPORT.md)** file
+ 
+---
+ 
