@@ -35,3 +35,43 @@ The **Deployment Diagram** illustrates the physical arrangement of the services,
  
 ---
  
+###  Microservices Breakdown
+ 
+| Service Name | Primary Functionality | Interactions | Technology Focus |
+| :--- | :--- | :--- | :--- |
+| **Main App Frontend** | User Interface and interaction point. | Communicates only with the **Main App Backend** (via Kong). | React/Vue/Angular (Placeholder) |
+| **Main App Backend (JWT Backend)** | Handles **User Authentication (JWT)**, Stores **User Data** and **Analysis Results**. | Interacts with **Version Control Data Fetcher**, **Code Analyser Backend**, and **Email Sender**. | Core Logic, Data Persistence |
+| **Version Control Data Fetcher** | Manages **GitHub OAuth** flow, checks user **Access Rights**, and fetches **Raw Repository Data** (commits, files, etc.). | Interacts with **GitHub API**. | External API Integration |
+| **Code Analyser Backend** | Performs complex **Calculations** and uses **AI** to analyze, summarize, and determine contributor impact. | Requests raw data from the **Version Control Data Fetcher**. | Data Processing, AI/ML |
+| **Email Sender** | Dedicated service for sending **Transactional Emails**, primarily notifying the user of completed analysis. | Triggered by the **Main App Backend**. | Email Protocol Handling (SMTP) |
+| **Kong API Gateway** | Acts as the single entry point/router for the frontend to access the main backend. | Routes traffic to the **Main App Backend**. | API Routing, Load Balancing |
+| **Kibana (Logging)** | Centralized platform for **Visualizing and Analysing Logs** from all microservices. | Receives logs from all services via a log shipper (e.g., Filebeat, Logstash). | Observability, Log Analytics |
+ 
+---
+ 
+##  Getting Started
+ 
+### Port Configuration
+ 
+The following table lists the default ports for each component. All external requests from the Frontend are routed through the **Kong API Gateway**.
+ 
+| Component | Port | Purpose | Note |
+| :--- | :--- | :--- | :--- |
+| **Main App Frontend** | `3000` (Example) | User Interface | |
+| **Kong API Gateway** | `8080` (Example) | **Router Entry Point** | Frontend calls this port. Routes to Main App Backend. |
+| **Main App Backend** | `8001` (Example) | Core Backend / JWT Auth / Data Storage | Only reachable internally or via Kong. |
+| **Version Control Data Fetcher** | `8002` (Example) | GitHub Data Retrieval | Internal use by Main App Backend/Analyser. |
+| **Code Analyser Backend** | `8003` (Example) | AI Analysis and Calculation | Internal use by Main App Backend. |
+| **Email Sender** | `8004` (Example) | Email Notification Service | Internal use by Main App Backend. |
+| **Kibana** | `5601` (Example) | Centralized Logging Dashboard | For debugging and monitoring. |
+ 
+---
+ 
+## Limitations
+ 
+While **Dev Impact** provides powerful analysis, users should be aware of the following potential limitations:
+ 
+* **GitHub API Rate Limits:** The analysis relies on fetching a potentially large amount of data from the GitHub API, which has strict rate limits. High-volume analysis could be throttled.
+* **Private Repository Access Scope:** The granted GitHub OAuth token only allows access to repositories the authenticated user is a part of. It cannot analyze repos the user doesn't have clone/read access to.
+* **Analysis Time:** For very large repositories with extensive commit history, the **Code Analyser Backend** may take a significant amount of time to complete its processing and AI analysis.
+* **AI Interpretation:** The quality and accuracy of the contribution summary and impact analysis are dependent on the training and sophistication of the integrated AI model. Edge cases or unconventional development patterns might be misinterpreted.
