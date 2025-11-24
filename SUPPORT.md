@@ -261,8 +261,56 @@ pip install drf-spectacular
 | `psycopg2-binary`        | 2.9.3   | PostgreSQL database adapter          |
 | `requests`               | 2.28.1  | HTTP library for API calls           |
 | `drf-spectacular`        | 0.27.3  | OpenAPI schema generation            |
- 
+
 ---
+ 
+### Configure Constants File
+ 
+Before running the server, you need to configure the `constants.py` file with the required API keys and service URLs.
+ 
+1. **Navigate to the processor folder:**
+   ```bash
+   cd codeContributionProcessor/processor
+   ```
+ 
+2. **Open the `constants.py` file** in your preferred editor.
+ 
+3. **Update the following values:**
+   
+   ```python
+   GITHUB_MS_URL = "YOUR_GITHUB_MS_URL_TO_FETCH_REPO_DATA"
+   GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+   GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
+   ```
+   
+   **Configuration Details:**
+   
+   | Variable | Description | Value |
+   | -------- | ----------- | ----- |
+   | `GITHUB_MS_URL` | URL of the Version Control Data Fetcher microservice | `http://localhost:8081/graphql` (if following this setup guide) |
+   | `GEMINI_API_URL` | Google Gemini API endpoint | Keep as default (already configured) |
+   | `GEMINI_API_KEY` | Your personal Gemini API key | Get from [Google AI Studio](https://aistudio.google.com/app/apikey) |
+ 
+4. **Example of configured `constants.py`:**
+   ```python
+   GITHUB_MS_URL = "http://localhost:8081/graphql"
+   GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+   GEMINI_API_KEY = "AIzaSyC..."  # Your actual API key
+   ```
+ 
+   **Important:** 
+   ```python
+   1. The `GITHUB_MS_URL` should point to wherever you're running the Version Control Data Fetcher microservice
+   2. If you're following this setup guide, use port `8081` as shown above
+   3. Replace `YOUR_GEMINI_API_KEY` with your actual Gemini API key from Google AI Studio
+   ```
+ 
+5. **Save the file** and navigate back to the project root:
+   ```bash
+   cd ../..
+   ```
+
+---   
  
 ### Run Migrations and Start Server
  
