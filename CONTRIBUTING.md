@@ -38,7 +38,7 @@ We are committed to providing a welcoming and inclusive environment for all cont
 
 ### Prerequisites
 
-Before you begin contributing, ensure you have completed the setup process outlined in **[SETUP.md](./SETUP.md)**. You should have:
+Before you begin contributing, ensure you have completed the setup process outlined in **[SUPPORT.md](./SUPPORT.md)**. You should have:
 
 - All required tools installed (Docker, JDK, Node.js, Python, etc.)
 - Docker containers running
@@ -57,7 +57,7 @@ Before you begin contributing, ensure you have completed the setup process outli
 ```bash
    git remote add upstream https://github.com/ORIGINAL-OWNER/REPOSITORY-NAME.git
 ```
-4. **Complete the setup** following [SETUP.md](./SETUP.md)
+4. **Complete the setup** following [SUPPORT.md](./SUPPORT.md)
 5. **Verify all services** are running correctly
 
 ---
@@ -480,7 +480,7 @@ By contributing to Dev Impact, you agree that your contributions will be license
 
 Thank you for taking the time to contribute to Dev Impact! Your efforts help make this project better for everyone. Whether you're fixing a typo, reporting a bug, or adding a major feature – every contribution matters.
 
-Happy coding! 
+Happy coding! ❤️
 
 ---
 
